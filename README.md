@@ -1,5 +1,5 @@
 # AUSPEX-SENS
-A repository for the **SENS**or Data Procesing Module.
+A repository for the **SENS**or Data Processing Module.
 
 
 ## Information
