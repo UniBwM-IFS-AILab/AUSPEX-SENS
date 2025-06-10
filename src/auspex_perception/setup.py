@@ -19,7 +19,6 @@ setup(
     maintainer_email='bjoern.doeschl@unibw.de',
     description='A summarized perception package.',
     license='MIT',
-    tests_require=['pytest'],
     entry_points={
         'console_scripts': [
             'image_processing_main_node = auspex_perception.image_processing_main:main',

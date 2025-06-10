@@ -11,28 +11,47 @@ from .image_processing_base import ImageProcessingBase
 import os
 
 class ObjectDetection(ImageProcessingBase):
-    
+
     def __init__(self, device):
-        self._device = device  
-        
-        
+        self._device = device
+        self._is_initalized = False
+
         package_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))))
         model_path = os.path.join(package_dir, "src", "auspex_perception", "auspex_perception", "models", "tank_coco_altered.pt")
-        self.model = YOLO(model_path).to(device=device)
+        self.model = None
+        if not os.path.exists(model_path):
+            return
+        self._is_initalized = True
 
-        self.model_names = self.model.names 
-        
-    def process_image(self, image):
-        with torch.no_grad():
-            results = self.model(image,verbose=False, conf=0.45 )
-        return [self.model_names[i] for i in results[0].boxes.cls.cpu().tolist()]
-    
+        try:
+            self.model = YOLO(model_path).to(device=device)
+            self.model_names = self.model.names
+        except Exception as e:
+            print(f"error: Failed to load model: {e}")
+            self.model = None
+
+    def process_image(self, image, visualize=False):
+        if self.model and self._is_initalized:
+            with torch.no_grad():
+                results = self.model(image, verbose=False, conf=0.70)
+
+            if visualize:
+                annotated_image = results[0].plot()
+                cv2.imshow("YOLO Detection", annotated_image)
+                cv2.waitKey(0)
+                cv2.destroyAllWindows()
+
+            return [self.model_names[i] for i in results[0].boxes.cls.cpu().tolist()]
+        else:
+            print('error: model not initialized')
+        return []
+
 class ImageClassification(ImageProcessingBase):
     def __init__(self, device):
-        self._device = device   
+        self._device = device
         self.feature_extractor = AutoFeatureExtractor.from_pretrained("microsoft/resnet-152", device=self._device)
         self.model = AutoModelForImageClassification.from_pretrained("microsoft/resnet-152").to(device=self._device)
-       
+
     def process_image(self, image):
         if self.use_model == "resnet":
             with torch.no_grad():
@@ -42,11 +61,11 @@ class ImageClassification(ImageProcessingBase):
             predicted_label = probs_real.argmax(-1).item()
             pred_label = self.model.config.id2label[predicted_label]
             return [pred_label]
-    
+
 class ColorDetection(ImageProcessingBase):
     def __init__(self, device="cuda:0"):
-        self._device = device 
-        
+        self._device = device
+
         kernel_size=(10,10)
         stride=5
         padding=0
@@ -65,7 +84,7 @@ class ColorDetection(ImageProcessingBase):
     """
     def closest_color(self, requested_colour):
         min_colors = {}
-        css4list = mc.CSS4_COLORS 
+        css4list = mc.CSS4_COLORS
         for name, key in css4list.items():
             r_c, g_c, b_c = webcolors.hex_to_rgb(key)
             rd = (r_c - requested_colour[0]) ** 2
@@ -108,7 +127,7 @@ class ColorDetection(ImageProcessingBase):
 
         img = Image.fromarray((img).astype(np.uint8))
         #img.show()
-        colors = img.getcolors(1024*1024) 
+        colors = img.getcolors(1024*1024)
         max_occurence, most_present = 0, 0
         try:
             for c in colors:
