@@ -17,7 +17,8 @@ class ObjectDetection(ImageProcessingBase):
         self._is_initalized = False
 
         package_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))))
-        model_path = os.path.join(package_dir, "src", "auspex_perception", "auspex_perception", "models", "tank_coco_altered.pt")
+        model_path = os.path.join(package_dir, "src", "auspex_perception", "auspex_perception", "models", "yolov8x_VisDrone.pt")
+        # model_path = os.path.join(package_dir, "src", "auspex_perception", "auspex_perception", "models", "tank_coco_altered.pt")
         self.model = None
         if not os.path.exists(model_path):
             return
@@ -33,7 +34,7 @@ class ObjectDetection(ImageProcessingBase):
     def process_image(self, image, visualize=False):
         if self.model and self._is_initalized:
             with torch.no_grad():
-                results = self.model(image, verbose=False, conf=0.70)
+                results = self.model(image, verbose=False, conf=0.60)
 
             if visualize:
                 annotated_image = results[0].plot()

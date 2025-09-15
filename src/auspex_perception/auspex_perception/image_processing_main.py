@@ -8,6 +8,7 @@ import numpy as np
 import torch
 import cv2
 import io
+import threading
 
 from msg_context.loader import ObjectKnowledge
 from msg_context.loader import FrameData
@@ -42,8 +43,8 @@ class ImageProcessing(Node):
         Define models here
         """
         self._model_od = ObjectDetection(device=self._device)
-        self._model_ic = ImageClassification(device=self._device)
-        self._model_color = ColorDetection(device=self._device)
+        #self._model_ic = ImageClassification(device=self._device)
+        #self._model_color = ColorDetection(device=self._device)
 
         self._current_model = self._model_od
 
@@ -53,6 +54,7 @@ class ImageProcessing(Node):
         self._publisher = self.create_publisher(ObjectKnowledge, '/detections', 10)
 
         self.subscription_dict= {}
+        self.subscription_mutex = threading.Lock()
         timer_period = 5  # seconds
         self.timer = self.create_timer(timer_period, self.update_subscriptions)
 
@@ -64,15 +66,21 @@ class ImageProcessing(Node):
 
     def update_platform_subscriptions(self, future):
         platforms_list = future.result().answer
-        for platform_id in platforms_list:
-            if platform_id not in self.subscription_dict:
-                sensor_qos = qos_profile_sensor_data
-                self.subscription_dict[platform_id] = self.create_subscription(FrameData,"/"+platform_id+'/raw_camera_stream',self.image_stream_cb, sensor_qos)
-                self.get_logger().info(f"[INFO]: Starting Object Detection for platform: {platform_id}.")
 
-        for key in self.subscription_dict.keys():
-            if key not in platforms_list:
-                del self.subscription_dict[platform_id]
+        with self.subscription_mutex:
+            # Add new platforms
+            for platform_id in platforms_list:
+                if platform_id not in self.subscription_dict:
+                    sensor_qos = qos_profile_sensor_data
+                    self.subscription_dict[platform_id] = self.create_subscription(FrameData,"/"+platform_id+'/raw_camera_stream',self.image_stream_cb, sensor_qos)
+                    self.get_logger().info(f"[INFO]: Starting Object Detection for platform: {platform_id}.")
+
+            # Remove platforms that are no longer in the list
+            current_platforms = list(self.subscription_dict.keys())
+            for platform_id in current_platforms:
+                if platform_id not in platforms_list:
+                    del self.subscription_dict[platform_id]
+                    self.get_logger().info(f"[INFO]: Removed Object Detection for platform: {platform_id}.")
 
     def image_stream_cb(self, msg):
         if msg.image_compressed.format == "empty":
