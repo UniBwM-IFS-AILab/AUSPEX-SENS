@@ -6,7 +6,7 @@ package_name = 'auspex_perception'
 
 setup(
     name=package_name,
-    version='1.0.0',
+    version='1.1.0',
     packages=find_packages(exclude=['test']),
     data_files=[
         ('share/ament_index/resource_index/packages',['resource/' + package_name]),
@@ -15,13 +15,13 @@ setup(
     ],
     install_requires=['setuptools'],
     zip_safe=True,
-    maintainer='Bjoern Doeschl',
-    maintainer_email='bjoern.doeschl@unibw.de',
-    description='A summarized perception package.',
+    maintainer='Kai Sommer',
+    maintainer_email='kai.sommer@unibw.de',
+    description='AUSPEX Perception Package.',
     license='MIT',
     entry_points={
         'console_scripts': [
-            'image_processing_main_node = auspex_perception.image_processing_main:main',
+            'sens_node = auspex_perception.object_detector:main',
         ],
     },
 )

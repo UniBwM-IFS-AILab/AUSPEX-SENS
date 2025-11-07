@@ -2,11 +2,10 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>auspex_perception</name>
-  <version>1.0.0</version>
+  <version>1.1.0</version>
   <description>AUSPEX Perception Module</description>
-  <maintainer email="bjoern.doeschl@unibw.de">Bjoern Doeschl</maintainer>
+  <maintainer email="kai.sommer@unibw.de">Kai Sommer</maintainer>
   <license>MIT</license>
-
 
   <depend>rclpy</depend>
   <depend>sensor_msgs</depend>
